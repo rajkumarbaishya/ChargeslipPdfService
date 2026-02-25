@@ -92,7 +92,7 @@ jobs:
       run: aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 274744451906.dkr.ecr.ap-south-1.amazonaws.com
    
     - name: Push docker image
-      run: docker push 274744451906.dkr.ecr.ap-south-1.amazonaws.com/bass-test:chargebackpdfsrv-${{github.run_number}}
+      run: docker push 274744451906.dkr.ecr.ap-south-1.amazonaws.com/bass-test:chargeslippdfsrv-${{github.run_number}}
       
   deploy:
      needs: build
@@ -129,8 +129,8 @@ jobs:
         run: helm repo add nexus_helm https://nexus.pinelabs.com/repository/common-deployment-helm-charts/ --username ${{ secrets.NEXUS_USERNAME }} --password ${{ secrets.NEXUS_PASSWORD }}
      
       - name: Pull Helm Chart
-        run: helm fetch nexus_helm/common-helm-chart --version 4.4.0
+        run: helm fetch nexus_helm/common-helm-chart --version 4.0.0
               
       - name: helm installing step
-        run: helm upgrade --install baas-cardprocessorservice nexus_helm/common-helm-chart --version 4.4.0  --namespace baas-test --set image.tag=cardprocessorservice-${{github.run_number}} --values ./cicd/test_saas_baas_cardprocessorservice_values.yaml
+        run: helm upgrade --install baas-chargeslippdfsrv nexus_helm/common-helm-chart --version 4.0.0  --namespace baas-test --set image.tag=chargeslippdfsrv-${{github.run_number}} --values ./cicd/test_saas_baas_chargeslippdfsrv_values.yaml
         
