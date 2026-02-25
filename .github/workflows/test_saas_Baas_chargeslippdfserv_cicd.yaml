@@ -61,7 +61,7 @@ jobs:
       run: |
          docker buildx create --name mybuilder --use
          docker buildx inspect --bootstrap 
-         docker buildx build --platform linux/amd64 . --file Dockerfile --build-arg APP_ENV=saas-test --tag 274744451906.dkr.ecr.ap-south-1.amazonaws.com/bass-test:chargebackpdfsrv-${{github.run_number}} --load
+         docker buildx build --platform linux/amd64 . --file Dockerfile --build-arg APP_ENV=saas-test --tag 274744451906.dkr.ecr.ap-south-1.amazonaws.com/bass-test:chargeslippdfsrv-${{github.run_number}} --load
 #         docker tag offline/baas-java/test/cardprocessorservice:${{github.run_number}} 274744451906.dkr.ecr.ap-south-1.amazonaws.com/baas-test:baas-test-cardprocessorservice-${{github.run_number}}-${{ env.GIT_COMMIT }} 
     
     - name: setup AWS CLI v2
