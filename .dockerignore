@@ -1,0 +1,28 @@
+# Build output
+target/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# Git
+.git/
+.gitignore
+
+# Maven wrapper (not needed — using maven image)
+.mvn/
+mvnw
+mvnw.cmd
+
+# Docs
+HELP.md
+README.md
+*.md
+
+# OS files
+.DS_Store
+Thumbs.db
