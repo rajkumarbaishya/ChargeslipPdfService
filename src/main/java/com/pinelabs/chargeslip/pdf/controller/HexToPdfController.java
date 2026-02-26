@@ -14,7 +14,7 @@ public class HexToPdfController {
 
     private final HexToPdfService service;
 
-    @GetMapping(value = "/chargeslip", produces = MediaType.APPLICATION_PDF_VALUE)
+    @GetMapping(value = "/chargeslip")
     public ResponseEntity<byte[]> getPdf(
             @RequestParam long transactionId,
             @RequestHeader("x-client-id") String clientId,
