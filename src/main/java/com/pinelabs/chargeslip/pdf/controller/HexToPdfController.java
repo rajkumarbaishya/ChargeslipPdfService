@@ -35,7 +35,7 @@ public class HexToPdfController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "inline; filename=chargeslip_" + transactionId + ".pdf")
+                        "attachment; filename=\"chargeslip_" + transactionId + ".pdf\"")
                 .contentType(MediaType.APPLICATION_PDF)
                 .contentLength(pdf.length)
                 .body(pdf);
@@ -64,7 +64,7 @@ public class HexToPdfController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "inline; filename=" + filename)
+                        "attachment; filename=\"" + filename + "\"")
                 .contentType(MediaType.APPLICATION_PDF)
                 .contentLength(pdf.length)
                 .body(pdf);
