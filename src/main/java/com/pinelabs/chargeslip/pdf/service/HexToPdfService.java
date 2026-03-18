@@ -10,6 +10,7 @@ import com.pinelabs.chargeslip.pdf.renderer.PdfRenderer;
 import com.pinelabs.chargeslip.pdf.util.HexUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -74,11 +75,14 @@ public class HexToPdfService {
      * Orchestrator flow:
      * transactionId -> hex -> PDF
      */
-    public byte[] fetchAndGeneratePdf(Long txnId, String clientId, String tenantId) {
+    public byte[] fetchAndGeneratePdf(Long txnId, HttpHeaders httpHeaders) {
+
+        String clientId = httpHeaders.getFirst("x-client-id");
+        String tenantId = httpHeaders.getFirst("x-tenant-id");
 
         log.info("Fetching hex dump from orchestrator. txnId={}, clientId={}, tenantId={}", txnId, clientId, tenantId);
 
-        String hex = orchestratorClient.fetchHexDump(txnId, clientId, tenantId);
+        String hex = orchestratorClient.fetchHexDump(txnId, httpHeaders);
 
         return convertHexToPdf(hex);
     }
