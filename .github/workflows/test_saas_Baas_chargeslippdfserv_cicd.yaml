@@ -1,0 +1,136 @@
+name: SAAS test Baas_ChargeslipPdfSrv Build and Deploy  
+ 
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Set branch for CI"
+        required: true
+        default: main
+  
+jobs:
+  build:
+    runs-on: actions_runner_dev_amd
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+          ref: ${{ github.event.inputs.branch }}        
+    - name: Print Job Summary
+      run: |
+       echo "### Project Summary! :rocket:" >> $GITHUB_STEP_SUMMARY
+       echo "" >> $GITHUB_STEP_SUMMARY
+       echo " Branch Name: ${{ github.event.inputs.branch }}" >> $GITHUB_STEP_SUMMARY
+       echo " Branch Commit ID: $(git log -n 1 --pretty=format:"%H" ${{ github.event.inputs.branch }})" >> $GITHUB_STEP_SUMMARY      
+          
+    - name: running update
+      run: sudo apt update
+      
+    # - name: java 11
+    #   run: sudo apt install default-jre -y
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: java version
+      run: java -version
+
+    - name: Setup Maven 3.9.10
+      uses: s4u/setup-maven-action@v1.11.0
+      with:
+          maven-version: '3.9.10'
+        
+       
+    - name: build
+      run: mvn clean package -DskipTests
+
+
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Setup docker buildx
+      uses: docker/setup-buildx-action@v3           
+       
+    - name: Build the Docker image
+      run: |
+         docker buildx create --name mybuilder --use
+         docker buildx inspect --bootstrap 
+         docker buildx build --platform linux/amd64 . --file Dockerfile --build-arg APP_ENV=saas-test --tag 274744451906.dkr.ecr.ap-south-1.amazonaws.com/bass-test:chargeslippdfsrv-${{github.run_number}} --load
+#         docker tag offline/baas-java/test/cardprocessorservice:${{github.run_number}} 274744451906.dkr.ecr.ap-south-1.amazonaws.com/baas-test:baas-test-cardprocessorservice-${{github.run_number}}-${{ env.GIT_COMMIT }} 
+    
+    - name: setup AWS CLI v2
+#      uses: aws-actions/setup-aws-cli@v2    
+      run: |
+         curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+         unzip -q awscliv2.zip
+         sudo ./aws/install
+         rm awscliv2.zip
+         aws --version
+
+
+#      run:  |
+#        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+#        unzip -q /tmp/awscliv2.zip -d /tmp
+#        rm /tmp/awscliv2.zip
+#        sudo /tmp/aws/install --update
+#        rm -rf /tmp/aws/
+    - name: configure aws credentials
+      uses: aws-actions/configure-aws-credentials@v1.7.0
+      with:
+        role-to-assume: arn:aws:iam::274744451906:role/aps1-uat-pci-GHAAssumedRole
+        role-session-name: GitHub_to_AWS_via_FederatedOIDC
+        aws-region: 'ap-south-1'
+        role-duration-seconds: 1200
+
+    - name: Login ECR
+      run: aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 274744451906.dkr.ecr.ap-south-1.amazonaws.com
+   
+    - name: Push docker image
+      run: docker push 274744451906.dkr.ecr.ap-south-1.amazonaws.com/bass-test:chargeslippdfsrv-${{github.run_number}}
+      
+  deploy:
+     needs: build
+     runs-on: actions_runner_dev_amd
+     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v2
+        with:
+          version: "latest"
+      - name: Install AWS CLI v2
+#        uses: aws-actions/setup-aws-cli@v2
+        run: |
+         curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+         unzip -q awscliv2.zip
+         sudo ./aws/install
+         rm awscliv2.zip
+         aws --version
+         
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v1.7.0
+        with:
+          role-to-assume: arn:aws:iam::274744451906:role/aps1-uat-pci-GHAAssumedRole
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: 'ap-south-1'
+          role-duration-seconds: 1200
+               
+      - name: connect to cluster
+        run: aws eks update-kubeconfig --name aps1-uat-pci-eks-cluster --region=ap-south-1
+          
+      - name: Add Helm Repo
+        run: helm repo add nexus_helm https://nexus.pinelabs.com/repository/common-deployment-helm-charts/ --username ${{ secrets.NEXUS_USERNAME }} --password ${{ secrets.NEXUS_PASSWORD }}
+     
+      - name: Pull Helm Chart
+        run: helm fetch nexus_helm/common-helm-chart --version 4.0.0
+              
+      - name: helm installing step
+        run: helm upgrade --install baas-chargeslippdfsrv nexus_helm/common-helm-chart --version 4.0.0  --namespace baas-test --set image.tag=chargeslippdfsrv-${{github.run_number}} --values ./cicd/test_saas_baas_chargeslippdfsrv_values.yaml
+        

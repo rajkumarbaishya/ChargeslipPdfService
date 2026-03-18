@@ -30,10 +30,10 @@ public class OrchestratorChargeSlipClient {
         log.info("OrchestratorChargeSlipClient initialized. baseUrl={}", baseUrl);
     }
 
-    public String fetchHexDump(Long transactionId, String clientId, String tenantId) {
+    public String fetchHexDump(Long transactionId, HttpHeaders incomingHeaders) {
 
         log.info("Calling orchestrator. transactionId={}, clientId={}, tenantId={}",
-                transactionId, clientId, tenantId);
+                transactionId, incomingHeaders.getFirst("x-client-id"), incomingHeaders.getFirst("x-tenant-id"));
 
         String url = UriComponentsBuilder
                 .fromUriString(baseUrl)
@@ -45,10 +45,8 @@ public class OrchestratorChargeSlipClient {
         log.debug("Orchestrator URL constructed: {}", url);
 
         HttpHeaders headers = new HttpHeaders();
-
+        headers.putAll(incomingHeaders);
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("x-client-id", clientId);
-        headers.set("x-tenant-id", tenantId);
 
         ResponseEntity<Map<String, Object>> resp;
 

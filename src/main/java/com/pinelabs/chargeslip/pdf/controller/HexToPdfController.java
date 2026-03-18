@@ -17,8 +17,10 @@ public class HexToPdfController {
     @GetMapping(value = "/chargeslip")
     public ResponseEntity<byte[]> getPdf(
             @RequestParam long transactionId,
-            @RequestHeader("x-client-id") String clientId,
-            @RequestHeader("x-tenant-id") String tenantId) {
+            @RequestHeader HttpHeaders httpHeaders) {
+
+        String clientId = httpHeaders.getFirst("x-client-id");
+        String tenantId = httpHeaders.getFirst("x-tenant-id");
 
         log.info("PDF request received. transactionId={}, clientId={}, tenantId={}", transactionId, clientId, tenantId);
 
@@ -29,7 +31,7 @@ public class HexToPdfController {
             throw new IllegalArgumentException("transactionId must be positive");
         }
 
-        byte[] pdf = service.fetchAndGeneratePdf(transactionId, clientId, tenantId);
+        byte[] pdf = service.fetchAndGeneratePdf(transactionId, httpHeaders);
 
         log.info("PDF generated successfully. transactionId={}, size={} bytes", transactionId, pdf.length);
 
