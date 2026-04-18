@@ -25,3 +25,12 @@ management:
   endpoint:
     health:
       show-details: never
+
+aws:
+  s3:
+    bucket-name: ${S3_BUCKET_NAME:chargeslip-pdfs}
+    region: ${AWS_REGION:ap-south-1}
+    presigned-url-expiry-minutes: ${S3_URL_EXPIRY_MINUTES:1440}
+
+tiny-url:
+  base-url: ${TINY_URL_SERVICE_BASE_URL:http://localhost:8092}

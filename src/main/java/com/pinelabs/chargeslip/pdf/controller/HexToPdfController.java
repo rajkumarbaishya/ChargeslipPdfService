@@ -1,5 +1,6 @@
 package com.pinelabs.chargeslip.pdf.controller;
 
+import com.pinelabs.chargeslip.pdf.model.ChargeslipPdfResponse;
 import com.pinelabs.chargeslip.pdf.service.HexToPdfService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +16,7 @@ public class HexToPdfController {
     private final HexToPdfService service;
 
     @GetMapping(value = "/chargeslip")
-    public ResponseEntity<byte[]> getPdf(
+    public ResponseEntity<ChargeslipPdfResponse> getPdf(
             @RequestParam long transactionId,
             @RequestHeader HttpHeaders httpHeaders) {
 
@@ -31,16 +32,19 @@ public class HexToPdfController {
             throw new IllegalArgumentException("transactionId must be positive");
         }
 
-        byte[] pdf = service.fetchAndGeneratePdf(transactionId, httpHeaders);
+        String tinyUrl = service.fetchGenerateAndGetTinyUrl(transactionId, httpHeaders);
 
-        log.info("PDF generated successfully. transactionId={}, size={} bytes", transactionId, pdf.length);
+        log.info("Chargeslip tiny URL generated. transactionId={}, tinyUrl={}", transactionId, tinyUrl);
+
+        ChargeslipPdfResponse response = ChargeslipPdfResponse.builder()
+                .transactionId(transactionId)
+                .tinyUrl(tinyUrl)
+                .status("SUCCESS")
+                .build();
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"chargeslip_" + transactionId + ".pdf\"")
-                .contentType(MediaType.APPLICATION_PDF)
-                .contentLength(pdf.length)
-                .body(pdf);
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(response);
     }
 
     /**

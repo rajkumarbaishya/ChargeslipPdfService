@@ -1,2 +1,10 @@
 orchestrator:
   base-url: http://baas-orchestratorservice:8081
+
+aws:
+  s3:
+    bucket-name: chargeslip-pdfs-test
+    region: ap-south-1
+
+tiny-url:
+  base-url: http://baas-tinyurlservice:8092

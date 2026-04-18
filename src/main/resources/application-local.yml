@@ -1,2 +1,10 @@
 orchestrator:
   base-url: http://localhost:8081
+
+aws:
+  s3:
+    bucket-name: chargeslip-pdfs-local
+    region: ap-south-1
+
+tiny-url:
+  base-url: http://localhost:8092
